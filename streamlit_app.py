@@ -12,6 +12,7 @@ st.title("Фильмы")
 st.write(
     """
     Данные: https://www.kaggle.com/datasets/tmdb/tmdb-movie-metadata)
+    работа с DataFrame looks good
     """
 )
 
