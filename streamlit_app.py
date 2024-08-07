@@ -94,7 +94,7 @@ st.write(movies)
 genres = st.multiselect(
     "Жанр",
     movies.Жанры.unique(),
-    ["Adventure", "Fantasy", "Action", "Crime"],
+ #   ["Adventure", "Fantasy", "Action", "Crime"],
 )
 # Какие жанры выбраны
 st.write("Выбраны:", genres)
