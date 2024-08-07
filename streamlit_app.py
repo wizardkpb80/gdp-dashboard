@@ -94,7 +94,7 @@ st.write(movies)
 genres = st.multiselect(
     "Жанр",
     movies.Жанры.unique(),
- #   ["Adventure", "Fantasy", "Action", "Crime"],
+    ["Adventure", "Fantasy", "Action", "Crime"],
 )
 # Какие жанры выбраны
 st.write("Выбраны:", genres)
@@ -102,7 +102,8 @@ st.write("Выбраны:", genres)
 # Фильтр
 titles = st.multiselect(
     "Поиск по названию",
-    movies.title.unique()
+    movies.title.unique(),
+    ["2012", "12 Rounds", "2046", "21", "2 Guns","Avatar"],
 )
 
 # Фильтр
