@@ -1,6 +1,6 @@
+pathlib
+altair
 pandas
-plotly
 streamlit
-yfinance
-pandas-datareader
-prophet
+ast
+datetime
