@@ -102,8 +102,7 @@ st.write("Выбраны:", genres)
 # Фильтр
 titles = st.multiselect(
     "Поиск по названию",
-    movies.title.unique(),
-    movies.title.unique(),
+    movies.title.unique()
 )
 
 # Фильтр
