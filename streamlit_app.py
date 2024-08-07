@@ -1,151 +1,150 @@
-import streamlit as st
-import pandas as pd
-import math
 from pathlib import Path
+import altair as alt
+import pandas as pd
+import streamlit as st
+import ast
+from datetime import datetime
 
-# Set the title and favicon that appear in the Browser's tab bar.
-st.set_page_config(
-    page_title='GDP dashboard',
-    page_icon=':earth_americas:', # This is an emoji shortcode. Could be a URL too.
-)
-
-# -----------------------------------------------------------------------------
-# Declare some useful functions.
-
-@st.cache_data
-def get_gdp_data():
-    """Grab GDP data from a CSV file.
-
-    This uses caching to avoid having to read the file every time. If we were
-    reading from an HTTP endpoint instead of a file, it's a good idea to set
-    a maximum age to the cache with the TTL argument: @st.cache_data(ttl='1d')
+st.set_page_config(page_title="Фильмы", page_icon="Ф")
+# Оглавление
+st.title("Фильмы")
+# Описание
+st.write(
     """
-
-    # Instead of a CSV on disk, you could read from an HTTP endpoint here too.
-    DATA_FILENAME = Path(__file__).parent/'data/gdp_data.csv'
-    raw_gdp_df = pd.read_csv(DATA_FILENAME)
-
-    MIN_YEAR = 1960
-    MAX_YEAR = 2022
-
-    # The data above has columns like:
-    # - Country Name
-    # - Country Code
-    # - [Stuff I don't care about]
-    # - GDP for 1960
-    # - GDP for 1961
-    # - GDP for 1962
-    # - ...
-    # - GDP for 2022
-    #
-    # ...but I want this instead:
-    # - Country Name
-    # - Country Code
-    # - Year
-    # - GDP
-    #
-    # So let's pivot all those year-columns into two: Year and GDP
-    gdp_df = raw_gdp_df.melt(
-        ['Country Code'],
-        [str(x) for x in range(MIN_YEAR, MAX_YEAR + 1)],
-        'Year',
-        'GDP',
-    )
-
-    # Convert years from string to integers
-    gdp_df['Year'] = pd.to_numeric(gdp_df['Year'])
-
-    return gdp_df
-
-gdp_df = get_gdp_data()
-
-# -----------------------------------------------------------------------------
-# Draw the actual page
-
-# Set the title that appears at the top of the page.
-'''
-# :earth_americas: GDP dashboard
-
-Browse GDP data from the [World Bank Open Data](https://data.worldbank.org/) website. As you'll
-notice, the data only goes to 2022 right now, and datapoints for certain years are often missing.
-But it's otherwise a great (and did I mention _free_?) source of data.
-'''
-
-# Add some spacing
-''
-''
-
-min_value = gdp_df['Year'].min()
-max_value = gdp_df['Year'].max()
-
-from_year, to_year = st.slider(
-    'Which123 years are you interested in?',
-    min_value=min_value,
-    max_value=max_value,
-    value=[min_value, max_value])
-
-countries = gdp_df['Country Code'].unique()
-
-if not len(countries):
-    st.warning("Select at least one country")
-
-selected_countries = st.multiselect(
-    'Which countries would you like to view?',
-    countries,
-    ['DEU', 'FRA', 'GBR', 'BRA', 'MEX', 'JPN'])
-
-''
-''
-''
-
-# Filter the data
-filtered_gdp_df = gdp_df[
-    (gdp_df['Country Code'].isin(selected_countries))
-    & (gdp_df['Year'] <= to_year)
-    & (from_year <= gdp_df['Year'])
-]
-
-st.header('GDP over time', divider='gray')
-
-''
-
-st.line_chart(
-    filtered_gdp_df,
-    x='Year',
-    y='GDP',
-    color='Country Code',
+    Данные: https://www.kaggle.com/datasets/tmdb/tmdb-movie-metadata)
+    """
 )
 
-''
-''
+page_bg_img = f"""
+<style>
+[data-testid="stAppViewContainer"] > .main {{
+background-image: url("https://img.freepik.com/free-photo/blue-wall-background_53876-88663.jpg?size=626&ext=jpg");
+background-size: cover;
+background-position: center center;
+background-repeat: no-repeat;
+background-attachment: local;
+}}
+[data-testid="stHeader"] {{
+background: rgba(0,0,0,0);
+}}
+</style>
+"""
+
+# Кнопка
+if st.button('Оформление') is True:
+       st.markdown(page_bg_img, unsafe_allow_html=True)
+
+def load_movies():
+    #df = pd.read_csv(Path(__file__).parent/"data/movies_genres_summary.csv")
+    df = pd.read_csv(Path(__file__).parent / "data/tmdb_5000_movies.csv")
+    return df
+
+def load_credits():
+    #df = pd.read_csv(Path(__file__).parent/"data/movies_genres_summary.csv")
+    df = pd.read_csv(Path(__file__).parent / "data/tmdb_5000_credits.csv")
+    return df
+
+def convert(text):
+    L = []
+    for i in ast.literal_eval(text):
+        L.append(i['name'])
+    return L
+
+def strconvert(text):
+    L = str()
+    for i in ast.literal_eval(text):
+        L = i['name']
+        break
+    return L
+
+def collapse(L):
+    L1 = []
+    for i in L:
+        L1.append(i.replace(" ",""))
+    return L1
+
+def fetch_director(text):
+    L = []
+    for i in ast.literal_eval(text):
+        if i['job'] == 'Director':
+            L.append(i['name'])
+    return L
+
+def is_year(release_date: str) -> str:
+    return datetime.strptime(release_date, "%Y-%m-%d").date().year
+
+movies = load_movies()
+credits = load_credits()
+movies = movies.merge(credits,on='title')
+movies.dropna(inplace=True)
+movies['Жанры'] = movies['genres'].apply(strconvert)
+movies['keywords'] = movies['keywords'].apply(convert)
+movies['cast'] = movies['cast'].apply(convert)
+movies['cast'] = movies['cast'].apply(lambda x:x[0:3])
+movies['crew'] = movies['crew'].apply(fetch_director)
+movies['cast'] = movies['cast'].apply(collapse)
+movies['crew'] = movies['crew'].apply(collapse)
+#movies['genres'] = movies['genres'].apply(collapse)
+movies['keywords'] = movies['keywords'].apply(collapse)
+movies['year'] = movies['release_date'].apply(is_year)
+# Таблица
+st.write(movies)
+
+# Жанр
+genres = st.multiselect(
+    "Жанр",
+    movies.Жанры.unique(),
+    ["Adventure", "Fantasy", "Action", "Crime"],
+)
+# Какие жанры выбраны
+st.write("Выбраны:", genres)
+
+# Фильтр
+titles = st.multiselect(
+    "Поиск по названию",
+    movies.title.unique(),
+    ["2012", "12 Rounds", "2046", "21", "2 Guns","Avatar"],
+)
+
+# Фильтр
+years = st.slider("Года", 1980, 2009, (2010, 2024))
+
+movies = movies[['Жанры','title','year','budget','keywords','cast','crew']]
 
 
-first_year = gdp_df[gdp_df['Year'] == from_year]
-last_year = gdp_df[gdp_df['Year'] == to_year]
+# Реализация фильтров
+# df_filtered = movies[(movies["Жанры"].str.contains('|'.join(genres))) & (movies["year"].between(years[0], years[1]))]
+df_filtered_by_name = movies[(movies["title"].isin(titles)) & (movies["year"].between(years[0], years[1]))]
 
-st.header(f'GDP in {to_year}', divider='gray')
+# Отображение данных
+st.write(df_filtered_by_name)
+#df_filtered = movies[(movies["title"].isin(titles)) & (movies["genres"].str.contains('|'.join(genres))) & (movies["year"].between(years[0], years[1]))]
+df_reshaped = df_filtered.pivot_table(
+    index="year", columns="Жанры", values="budget", aggfunc="sum", fill_value=0
+)
+df_reshaped = df_reshaped.sort_values(by="year", ascending=False)
 
-''
+st.dataframe(
+    df_reshaped,
+    use_container_width=True,
+    column_config={"year": st.column_config.TextColumn("Год")},
+)
 
-cols = st.columns(4)
+df_chart = pd.melt(
+    df_reshaped.reset_index(), id_vars="year", var_name="Жанры", value_name="budget"
+)
+chart = (
+    alt.Chart(df_chart)
+    .mark_line()
+    .encode(
+        x=alt.X("year:N", title="Год"),
+        y=alt.Y("budget:Q", title="Бюджет ($)"),
+        color="Жанры:N",
+    )
+    .properties(height=320)
+)
+# График
+st.altair_chart(chart, use_container_width=True)
 
-for i, country in enumerate(selected_countries):
-    col = cols[i % len(cols)]
-
-    with col:
-        first_gdp = first_year[gdp_df['Country Code'] == country]['GDP'].iat[0] / 1000000000
-        last_gdp = last_year[gdp_df['Country Code'] == country]['GDP'].iat[0] / 1000000000
-
-        if math.isnan(first_gdp):
-            growth = 'n/a'
-            delta_color = 'off'
-        else:
-            growth = f'{last_gdp / first_gdp:,.2f}x'
-            delta_color = 'normal'
-
-        st.metric(
-            label=f'{country} GDP',
-            value=f'{last_gdp:,.0f}B',
-            delta=growth,
-            delta_color=delta_color
-        )
+# Данные
+st.dataframe(df_filtered)
