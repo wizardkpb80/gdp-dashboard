@@ -112,7 +112,7 @@ movies = movies[['Жанры','title','year','budget','keywords','cast','crew']]
 
 
 # Реализация фильтров
-# df_filtered = movies[(movies["Жанры"].str.contains('|'.join(genres))) & (movies["year"].between(years[0], years[1]))]
+df_filtered = movies[(movies["Жанры"].str.contains('|'.join(genres))) & (movies["year"].between(years[0], years[1]))]
 df_filtered_by_name = movies[(movies["title"].isin(titles)) & (movies["year"].between(years[0], years[1]))]
 
 # Отображение данных
